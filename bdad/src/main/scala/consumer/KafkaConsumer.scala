@@ -7,7 +7,7 @@ import org.apache.spark.sql.types.{DoubleType, IntegerType, StringType, StructFi
 object KafkaConsumer {
   def main(args: Array[String]): Unit = {
     val spark = SparkSession.builder
-      .appName("Transaction Producer")
+      .appName("Transaction Consumer")
       .master("local[*]")
       .getOrCreate();
 
