@@ -6,10 +6,18 @@ import org.apache.spark.sql.types._
 
 object KafkaConsumer {
   def main(args: Array[String]): Unit = {
+
     val spark = SparkSession.builder
       .appName("Transaction Consumer")
       .master("local[*]")
       .getOrCreate();
+
+    val df = spark
+      .readStream
+      .format("kafka")
+      .option("kafka.bootstrap.servers", "nyu-dataproc-w-0:9092")
+      .option("subscribe", "bdad-g3")
+      .load()
 
     val schema = StructType(Array(
       StructField("userid", StringType, true),
@@ -22,17 +30,10 @@ object KafkaConsumer {
       StructField("country", StringType, true)
     ));
 
-    val df = spark
-      .readStream
-      .schema(schema)
-      .format("kafka")
-      .option("kafka.bootstrap.servers", "nyu-dataproc-w-0:9092")
-      .option("subscribe", "bdad-g3")
-      .load()
-
     val jsonDf = df.selectExpr("CAST(value AS STRING) AS value")
       .select(from_json(col("value"), schema).alias("data"))
       .select("data.*")
+      .drop(col("data"))
 
     val query = jsonDf
       .writeStream
