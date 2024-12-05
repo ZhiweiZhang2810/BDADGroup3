@@ -24,7 +24,7 @@ object KafkaProducer {
 
     val transactionDF = spark.read
       .schema(schema)
-      .csv("/user/qz2166_nyu_edu/transaction_data.csv");
+      .csv("~/transaction_data.csv");
 
     val kvDF = transactionDF
       .withColumn("key", col("userid"))
