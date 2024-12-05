@@ -22,9 +22,10 @@ object KafkaProducer {
       StructField("country", StringType, true)
     ));
 
+    val homeDir = System.getProperty("user.home")
     val transactionDF = spark.read
       .schema(schema)
-      .csv("~/transaction_data.csv");
+      .csv(s"$homeDir/transaction_data.csv")
 
     val kvDF = transactionDF
       .withColumn("key", col("userid"))
