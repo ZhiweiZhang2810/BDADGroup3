@@ -6,8 +6,9 @@ ThisBuild / organization     := "com.bdad"
 ThisBuild / organizationName := "bdad"
 
 assemblyMergeStrategy in assembly := {
-  case PathList("META-INF", _*) => MergeStrategy.discard
-  case _                        => MergeStrategy.first
+  case PathList("META-INF","services",xs @ _*) => MergeStrategy.filterDistinctLines // Added this
+  case PathList("META-INF",xs @ _*) => MergeStrategy.discard
+  case _ => MergeStrategy.first
 }
 
 lazy val bdad = (project in file("."))
