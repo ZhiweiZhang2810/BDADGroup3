@@ -1,5 +1,3 @@
-package consumer
-
 object HudiWriter {
 
 }
