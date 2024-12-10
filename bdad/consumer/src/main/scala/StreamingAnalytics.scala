@@ -21,7 +21,7 @@ object StreamingAnalytics {
       .format("console")
       .outputMode("append")
       .option("truncate", "false")
-      .option("checkpointLocation", ".")
+//      .option("checkpointLocation", "./cp")
       .start()
 
     // Zone with the most pickups in the last five minutes
@@ -44,7 +44,7 @@ object StreamingAnalytics {
           .limit(1)
           .show()
       })
-      .option("checkpointLocation", ".")
+//      .option("checkpointLocation", ".")
       .option("truncate", "false")
       .start()
 
