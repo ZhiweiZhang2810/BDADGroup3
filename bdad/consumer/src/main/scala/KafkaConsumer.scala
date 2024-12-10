@@ -8,7 +8,7 @@ object KafkaConsumer {
   def main(args: Array[String]): Unit = {
 
     val spark = SparkSession.builder
-      .appName("Transaction Consumer")
+      .appName("Ride Stream Consumer")
       .master("local[*]")
       .getOrCreate();
 
@@ -17,23 +17,20 @@ object KafkaConsumer {
       .format("kafka")
       .option("kafka.bootstrap.servers", "nyu-dataproc-w-0:9092")
       .option("subscribe", "bdad-g3")
+      .option("startingOffsets","earliest")
       .load()
 
     val schema = StructType(Array(
-      StructField("userid", StringType, true),
-      StructField("transactionid", StringType, true),
-      StructField("transactionTime", TimestampType, true),
-      StructField("itemcode", StringType, true),
-      StructField("itemdescription", StringType, true),
-      StructField("numberofitempurchased", IntegerType, true),
-      StructField("costperitem", DoubleType, true),
-      StructField("country", StringType, true)
-    ));
+      StructField("event_type",StringType,false),
+      StructField("event_time",TimestampNTZType,true),
+      StructField("location_id",IntegerType,true)))
 
     val jsonDf = df.selectExpr("CAST(value AS STRING) AS value")
       .select(from_json(col("value"), schema).alias("data"))
       .select("data.*")
       .drop(col("data"))
+
+    StreamingAnalytics(jsonDf, spark);
 
     val query = jsonDf
       .writeStream
