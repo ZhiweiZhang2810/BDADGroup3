@@ -34,7 +34,7 @@ object StreamingAnalytics {
       .agg(count("*").alias("event_count"))
       .join(locationDf, "location_id")
       .writeStream
-      .foreachBatch((bdf, _) => {
+      .foreachBatch((bdf: org.apache.spark.sql.DataFrame, batchId: Long) => {
         println("The busiest location")
         bdf.orderBy(col("event_count").desc)
           .where(col("event_type") === "pickup")
