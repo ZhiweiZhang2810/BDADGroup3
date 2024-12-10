@@ -17,13 +17,13 @@ object KafkaConsumer {
       .format("kafka")
       .option("kafka.bootstrap.servers", "nyu-dataproc-w-0:9092")
       .option("subscribe", "bdad-g3")
-      .option("startingOffsets","earliest")
+      .option("startingOffsets", "earliest")
       .load()
 
     val schema = StructType(Array(
-      StructField("event_type",StringType,false),
-      StructField("event_time",TimestampNTZType,true),
-      StructField("location_id",IntegerType,true)))
+      StructField("event_type", StringType, nullable = false),
+      StructField("event_time", TimestampNTZType, nullable = true),
+      StructField("location_id", IntegerType, nullable = true)))
 
     val jsonDf = df.selectExpr("CAST(value AS STRING) AS value")
       .select(from_json(col("value"), schema).alias("data"))
@@ -33,8 +33,8 @@ object KafkaConsumer {
     val analytics = StreamingAnalytics(jsonDf)(spark)
 
     // Write to Hudi
-//    val dataSink = writeToHudi()(spark)
-//    dataSink.awaitTermination()
+    //    val dataSink = writeToHudi()(spark)
+    //    dataSink.awaitTermination()
 
     analytics.awaitTermination()
   }
