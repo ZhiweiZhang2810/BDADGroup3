@@ -35,6 +35,7 @@ object KafkaConsumer {
     // Write to Hudi
     //    val dataSink = writeToHudi()(spark)
     //    dataSink.awaitTermination()
+    // WriteToHudi(jsonDF)
 
     analytics.awaitTermination()
   }
