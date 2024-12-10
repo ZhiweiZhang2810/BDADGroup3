@@ -39,12 +39,12 @@ object KafkaProducer {
       .getOrCreate();
 
     val homeDir = System.getProperty("user.home");
-    val DF = spark.read.parquet(s"$homeDir/fhvhv_tripdata_2024-09.parquet");
+    val DF = spark.read.parquet("/user/qz2166_nyu_edu/fhvhv_tripdata_2024-09.parquet");
     val dayDF = splitDropoffPickup(DF.filter(to_date(col("dropoff_datetime")) === Date && to_date(col("pickup_datetime")) === Date))
       .sort(asc("event_time"))
       .cache;
 
-    writeToKafka(dayDF.filter(hour(col("dropoff_datetime")) < 20));
+    writeToKafka(dayDF.filter(hour(col("event_time")) < 20));
 
     for (ihour <- 20 to 23) {
       val hourDF = dayDF.filter(hour(col("event_time")) === ihour).cache;
