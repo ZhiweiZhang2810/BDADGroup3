@@ -30,15 +30,12 @@ object KafkaConsumer {
       .select("data.*")
       .drop(col("data"))
 
-    StreamingAnalytics(jsonDf, spark);
+    val analytics = StreamingAnalytics(jsonDf)(spark)
 
-    val query = jsonDf
-      .writeStream
-      .outputMode("append")
-      .format("console")
-      .option("truncate", "false")
-      .start()
+    // Write to Hudi
+//    val dataSink = writeToHudi()(spark)
+//    dataSink.awaitTermination()
 
-    query.awaitTermination()
+    analytics.awaitTermination()
   }
 }
