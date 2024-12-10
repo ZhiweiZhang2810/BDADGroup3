@@ -12,13 +12,13 @@ object KafkaProducer {
       lit("pickup").alias("event_type"),
       col("pickup_datetime").alias("event_time"),
       col("PULocationID").alias("location_id")
-    ).filter(to_date(col("pickup_datetime")) === Date);
+    );
 
     val dropoffDF = df.select(
       lit("dropoff").alias("event_type"),
       col("dropoff_datetime").alias("event_time"),
       col("DOLocationID").alias("location_id")
-    ).filter(to_date(col("dropoff_datetime")) === Date);
+    );
 
     return pickupDF.union(dropoffDF);
   }
@@ -34,13 +34,13 @@ object KafkaProducer {
 
   def main(args: Array[String]): Unit = {
     val spark = SparkSession.builder
-      .appName("Transaction Producer")
+      .appName("Ride Strean Producer")
       .master("local[*]")
       .getOrCreate();
 
-    val homeDir = System.getProperty("user.home")
+    val homeDir = System.getProperty("user.home");
     val DF = spark.read.parquet(s"$homeDir/fhvhv_tripdata_2024-09.parquet");
-    val dayDF = splitDropoffPickup(DF.filter(to_date(col("dropoff_datetime")) === Date || to_date(col("pickup_datetime")) === Date))
+    val dayDF = splitDropoffPickup(DF.filter(to_date(col("dropoff_datetime")) === Date && to_date(col("pickup_datetime")) === Date))
       .sort(asc("event_time"))
       .cache;
 
