@@ -6,6 +6,7 @@ object StreamingAnalytics {
 
         // zone with the most pickups in the last five minutes
         val windowedCounts = df.withColumn("event_time", col("event_time").cast("timestamp"))
+            .filter(col("event_type") === "pickup")
             .withWatermark("event_time", "5 minute")
             .groupBy(window(col("event_time"), "5 minute", "1 minute"), col("location_id"))
             .agg(count("*").alias("num_pickups"))
