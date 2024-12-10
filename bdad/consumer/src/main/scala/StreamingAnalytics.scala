@@ -18,11 +18,10 @@ object StreamingAnalytics {
       ).as("ongoing_trips")
       .writeStream
       .trigger(Trigger.ProcessingTime("1 minute"))
-      .option("checkpointLocation", "cp")
       .format("console")
       .outputMode("append")
       .option("truncate", "false")
-      .option("checkpointLocation", "cp")
+      .option("checkpointLocation", ".")
       .start()
 
     // Zone with the most pickups in the last five minutes
@@ -45,7 +44,7 @@ object StreamingAnalytics {
           .limit(1)
           .show()
       })
-      .option("checkpointLocation", "cp")
+      .option("checkpointLocation", ".")
       .option("truncate", "false")
       .start()
 
