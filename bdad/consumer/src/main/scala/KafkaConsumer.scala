@@ -37,10 +37,7 @@ object KafkaConsumer {
 
     val qPair = StreamingAnalytics(jsonDf)(spark)
 
-    // Write to Hudi
-    //    val dataSink = writeToHudi()(spark)
-    //    dataSink.awaitTermination()
-    // WriteToHudi(jsonDF)
+    WriteToHudi(jsonDF)
 
     qPair._1.awaitTermination()
     qPair._2.awaitTermination()
