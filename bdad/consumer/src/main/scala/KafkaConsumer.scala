@@ -1,11 +1,16 @@
 package consumer
 
+import org.apache.log4j.{Level, Logger}
+import org.apache.log4j.spi.LoggerFactory
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions.{col, from_json}
 import org.apache.spark.sql.types._
 
 object KafkaConsumer {
+  val logger = Logger.getLogger(this.getClass)
+
   def main(args: Array[String]): Unit = {
+    logger.setLevel(Level.WARN)
 
     val spark = SparkSession.builder
       .appName("Ride Stream Consumer")
@@ -15,7 +20,7 @@ object KafkaConsumer {
     val df = spark
       .readStream
       .format("kafka")
-      .option("kafka.bootstrap.servers", "nyu-dataproc-w-0:9092")
+      .option("kafka.bootstrap.servers", "localhost:9092")
       .option("subscribe", "bdad-g3")
       .option("startingOffsets", "earliest")
       .load()

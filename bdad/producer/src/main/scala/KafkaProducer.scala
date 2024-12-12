@@ -20,14 +20,14 @@ object KafkaProducer {
       col("DOLocationID").alias("location_id")
     );
 
-    return pickupDF.union(dropoffDF);
+    pickupDF.union(dropoffDF);
   }
 
   def writeToKafka(df: org.apache.spark.sql.DataFrame): Unit = {
     df.selectExpr("CAST(NULL AS STRING) AS key", "to_json(struct(*)) AS value")
       .write
       .format("kafka")
-      .option("kafka.bootstrap.servers", "nyu-dataproc-w-0:9092")
+      .option("kafka.bootstrap.servers", "localhost:9092")
       .option("topic", "bdad-g3")
       .save;
   }
@@ -47,14 +47,13 @@ object KafkaProducer {
     writeToKafka(dayDF.filter(hour(col("event_time")) < 20));
 
     for (ihour <- 20 to 23) {
-      val hourDF = dayDF.filter(hour(col("event_time")) === ihour).cache;
+      val hourDF = dayDF.filter(hour(col("event_time")) === ihour)
       for (iminute <- 0 to 59) {
-        val minuteDF = hourDF.filter(minute(col("event_time")) === iminute).cache
-        for (isecond <- 0 to 59) {
-          val secondDF = minuteDF.filter(second(col("event_time")) === isecond).cache;
-          writeToKafka(secondDF);
-          Thread.sleep(1000);
-        }
+        val minuteDF = hourDF.filter(minute(col("event_time")) === iminute)
+        writeToKafka(minuteDF.filter(second(col("event_time")) >= 0 && second(col("event_time")) < 30))
+        Thread.sleep(10000);
+        writeToKafka(minuteDF.filter(second(col("event_time")) >= 30))
+        Thread.sleep(10000);
       }
     }
 
