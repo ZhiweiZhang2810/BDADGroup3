@@ -5,6 +5,7 @@ import org.apache.log4j.spi.LoggerFactory
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions.{col, from_json}
 import org.apache.spark.sql.types._
+import consumer.HudiWriter.WriteToHudi
 
 object KafkaConsumer {
   val logger = Logger.getLogger(this.getClass)
@@ -37,7 +38,10 @@ object KafkaConsumer {
 
     val qPair = StreamingAnalytics(jsonDf)(spark)
 
-    WriteToHudi(jsonDF)
+    // Write to Hudi
+    //    val dataSink = writeToHudi()(spark)
+    //    dataSink.awaitTermination()
+    // WriteToHudi(jsonDf)
 
     qPair._1.awaitTermination()
     qPair._2.awaitTermination()

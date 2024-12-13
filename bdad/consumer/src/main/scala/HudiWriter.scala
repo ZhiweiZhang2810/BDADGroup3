@@ -8,7 +8,7 @@ object HudiWriter {
   def WriteToHudi(jsonDf: org.apache.spark.sql.DataFrame): Unit = {
 
     val tableName = "hudi_trips_cow"
-    val basePath = "hdfs://nyu-dataproc-w-0:8020/tmp/hudi_trips_cow"
+    val basePath = "hdfs://tmp/hudi_trips_cow"
 
     jsonDf.write.format("hudi").
       options(getQuickstartWriteConfigs)
