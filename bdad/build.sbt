@@ -34,6 +34,6 @@ lazy val consumer = (project in file("consumer"))
       "org.apache.spark" %% "spark-core" % "3.5.0",
       "org.apache.spark" %% "spark-sql" % "3.5.0",
       "org.apache.spark" %% "spark-sql-kafka-0-10" % "3.5.0",
-      "org.apache.hudi" % "hudi-spark_2.12" % "1.0.0-beta2"
+      "org.apache.hudi" %% "hudi-spark3.5-bundle" % "0.15.0"
     )
   )
