@@ -1,11 +1,11 @@
 package consumer
 
-import org.apache.spark.sql.{SparkSession, functions}
+import org.apache.spark.sql.{DataFrame, SparkSession, functions}
 import org.apache.spark.sql.functions.{col, concat_ws, count, when, window}
-import org.apache.spark.sql.streaming.{StreamingQuery, Trigger}
+import org.apache.spark.sql.types.TimestampType
 
 object StreamingAnalytics {
-  def apply(df: org.apache.spark.sql.DataFrame)(implicit spark: SparkSession): (StreamingQuery, StreamingQuery) = {
+  def apply(df: DataFrame)(implicit spark: SparkSession): (DataFrame, DataFrame) = {
     val homeDir = System.getProperty("user.home")
     val locationDf = spark.read.option("header", "true").csv(s"$homeDir/taxi_zone_lookup.csv")
       .select(col("LocationID").alias("location_id"), concat_ws(",", col("Zone"), col("Borough")).alias("Location")).cache()

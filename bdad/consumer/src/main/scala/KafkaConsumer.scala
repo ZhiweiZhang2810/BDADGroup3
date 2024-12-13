@@ -1,10 +1,12 @@
 package consumer
 
+
 import org.apache.log4j.{Level, Logger}
-import org.apache.log4j.spi.LoggerFactory
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.functions.{col, from_json}
+import org.apache.spark.sql.streaming.Trigger
 import org.apache.spark.sql.types._
+import org.apache.spark.sql.streaming.StreamingQuery
 
 object KafkaConsumer {
   val logger = Logger.getLogger(this.getClass)
@@ -12,11 +14,12 @@ object KafkaConsumer {
   def main(args: Array[String]): Unit = {
     logger.setLevel(Level.WARN)
 
-    val spark = SparkSession.builder
+    implicit val spark = SparkSession.builder
       .appName("Ride Stream Consumer")
       .master("local[*]")
       .config("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
       .getOrCreate();
+    import spark.implicits._
 
     val df = spark
       .readStream
@@ -39,19 +42,15 @@ object KafkaConsumer {
     val (ongoingTripsDf, busiestLocationsDf) = StreamingAnalytics(jsonDf)
 
 
-    val hudiOptions = Map(
-      "hoodie.datasource.write.recordkey.field" -> "location_id",
+    val commonHudiOptions = Map(
       "hoodie.datasource.write.precombine.field" -> "event_time",
       "hoodie.datasource.write.table.type" -> "MERGE_ON_READ",
       "hoodie.datasource.write.operation" -> "upsert",
-      "hoodie.upsert.shuffle.parallelism" -> "2",
-      "hoodie.insert.shuffle.parallelism" -> "2",
       "hoodie.cleaner.policy" -> "KEEP_LATEST_COMMITS",
       "hoodie.keep.min.commits" -> "20",
       "hoodie.keep.max.commits" -> "30",
       "hoodie.datasource.write.payload.class" -> "org.apache.hudi.common.model.OverwriteWithLatestAvroPayload"
     )
-
 
     val hudiTableNameBusiestLocations = "busiest_locations"
     val hudiTablePathBusiestLocations = "file:///path/to/hudi/table/busiest_locations"
