@@ -12,7 +12,7 @@ object StreamingAnalytics {
 
     // ongoingTripsDf
     val ongoingTripsDf = df.withColumn("event_time", col("event_time").cast("timestamp"))
-      .withWatermark("event_time", "5 minutes") // 添加 watermark 以进行状态管理
+      .withWatermark("event_time", "5 minutes")
       .groupBy(window(col("event_time"), "5 minutes", "1 minute"))
       .agg(
         (functions.sum(when(col("event_type") === "pickup", 1).otherwise(0)) -
