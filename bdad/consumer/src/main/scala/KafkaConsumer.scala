@@ -14,11 +14,12 @@ object KafkaConsumer {
   def main(args: Array[String]): Unit = {
     logger.setLevel(Level.WARN)
 
-    implicit val spark = SparkSession.builder
+    implicit val spark: SparkSession = SparkSession.builder
       .appName("Ride Stream Consumer")
       .master("local[*]")
       .config("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
       .getOrCreate();
+
     import spark.implicits._
 
     val df = spark
@@ -39,7 +40,7 @@ object KafkaConsumer {
       .select("data.*")
       .drop(col("data"))
 
-    val (ongoingTripsDf, busiestLocationsDf) = StreamingAnalytics(jsonDf)
+    val (ongoingTripsDf, busiestLocationsDf) = StreamingAnalytics(jsonDf)<spark>
 
 
     val commonHudiOptions = Map(
@@ -52,18 +53,21 @@ object KafkaConsumer {
       "hoodie.datasource.write.payload.class" -> "org.apache.hudi.common.model.OverwriteWithLatestAvroPayload"
     )
 
+
     val hudiTableNameBusiestLocations = "busiest_locations"
     val hudiTablePathBusiestLocations = "file:///home/xs2534_nyu_edu/hudi_table/busiest_locations"
 
     val hudiTableNameOngoingTrips = "ongoing_trips"
     val hudiTablePathOngoingTrips = "file:///home/xs2534_nyu_edu/hudi_table/ongoing_trips"
 
+    // busiestLocationsDf
     val hudiOptionsBusiestLocations = commonHudiOptions ++ Map(
       "hoodie.table.name" -> hudiTableNameBusiestLocations,
       "hoodie.datasource.write.recordkey.field" -> "location_id",
       "hoodie.datasource.write.partitionpath.field" -> "event_type"
     )
 
+    // ongoingTripsDf
     val hudiOptionsOngoingTrips = commonHudiOptions ++ Map(
       "hoodie.table.name" -> hudiTableNameOngoingTrips,
       "hoodie.datasource.write.recordkey.field" -> "window",
@@ -72,6 +76,7 @@ object KafkaConsumer {
 
     val hudiSink1: StreamingQuery = busiestLocationsDf.writeStream
       .foreachBatch { (batchDf: DataFrame, batchId: Long) =>
+        //  Write into Hudi
         batchDf.write.format("org.apache.hudi")
           .options(hudiOptionsBusiestLocations)
           .mode("append")
@@ -89,13 +94,13 @@ object KafkaConsumer {
           .limit(1)
           .show(truncate = false)
       }
-      .option("checkpointLocation", "file:///tmp/hudi_checkpoint_busiest_locations")
+      .option("checkpointLocation", "file:///home/xs2534_nyu_edu/hudi_table/hudi_checkpoint_busiest_locations")
       .start()
 
     val hudiSink2: StreamingQuery = ongoingTripsDf.writeStream
       .format("org.apache.hudi")
       .options(hudiOptionsOngoingTrips)
-      .option("checkpointLocation", "file:///tmp/hudi_checkpoint_ongoing_trips")
+      .option("checkpointLocation", "file:///home/xs2534_nyu_edu/hudi_table/hudi_checkpoint_ongoing_trips")
       .outputMode("append")
       .trigger(Trigger.ProcessingTime("1 minute"))
       .start(hudiTablePathOngoingTrips)
