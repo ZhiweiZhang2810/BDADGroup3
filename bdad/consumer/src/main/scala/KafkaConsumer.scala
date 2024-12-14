@@ -2,11 +2,14 @@ package consumer
 
 
 import org.apache.log4j.{Level, Logger}
-import org.apache.spark.sql.{DataFrame, SparkSession}
-import org.apache.spark.sql.functions.{col, from_json}
+import org.apache.spark.sql.{DataFrame, SparkSession, functions}
+import org.apache.spark.sql.functions.{col, from_json,concat_ws, count, when, window}
 import org.apache.spark.sql.streaming.Trigger
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.streaming.StreamingQuery
+import org.apache.spark.sql.types.TimestampType
+
+
 
 object KafkaConsumer {
   val logger = Logger.getLogger(this.getClass)
@@ -40,11 +43,11 @@ object KafkaConsumer {
       .select("data.*")
       .drop(col("data"))
 
-    val (ongoingTripsDf, busiestLocationsDf) = StreamingAnalytics(jsonDf)
 
 
+
+    // Hudi 选项
     val commonHudiOptions = Map(
-      "hoodie.datasource.write.precombine.field" -> "event_time",
       "hoodie.datasource.write.table.type" -> "MERGE_ON_READ",
       "hoodie.datasource.write.operation" -> "upsert",
       "hoodie.cleaner.policy" -> "KEEP_LATEST_COMMITS",
@@ -54,58 +57,60 @@ object KafkaConsumer {
     )
 
 
-    val hudiTableNameBusiestLocations = "busiest_locations"
-    val hudiTablePathBusiestLocations = "file:///home/xs2534_nyu_edu/hudi_table/busiest_locations"
-
-    val hudiTableNameOngoingTrips = "ongoing_trips"
-    val hudiTablePathOngoingTrips = "file:///home/xs2534_nyu_edu/hudi_table/ongoing_trips"
-
-    // busiestLocationsDf
+    // Hudi 选项针对 busiestLocationsDf
     val hudiOptionsBusiestLocations = commonHudiOptions ++ Map(
-      "hoodie.table.name" -> hudiTableNameBusiestLocations,
+      "hoodie.table.name" -> "busiest_locations",
+      "hoodie.datasource.write.precombine.field" -> "event_time",
       "hoodie.datasource.write.recordkey.field" -> "location_id",
       "hoodie.datasource.write.partitionpath.field" -> "event_type"
     )
 
-    // ongoingTripsDf
+    // Hudi 选项针对 ongoingTripsDf
     val hudiOptionsOngoingTrips = commonHudiOptions ++ Map(
-      "hoodie.table.name" -> hudiTableNameOngoingTrips,
+      "hoodie.table.name" -> "ongoing_trips",
       "hoodie.datasource.write.recordkey.field" -> "window",
       "hoodie.datasource.write.partitionpath.field" -> ""
     )
+    val homeDir = System.getProperty("user.home");
+    val locationDf = spark.read.option("header", "true").csv(s"$homeDir/taxi_zone_lookup.csv")
+      .select(col("LocationID").alias("location_id"), concat_ws(",", col("Zone"), col("Borough")).alias("Location")).cache()
+    val busiestLocationsDf  = jsonDf.withColumn("event_time", col("event_time").cast("timestamp"))
+      .withWatermark("event_time", "5 minute")
+      .groupBy(window(col("event_time"), "5 minute", "1 minute"), col("location_id"), col("event_type"), col("event_time"))
+      .agg(count("*").alias("event_count"))
+      .join(locationDf, "location_id")
+      .writeStream.format("org.apache.hudi").
+      options(hudiOptionsBusiestLocations).
+      outputMode("append").
+      option("path", "file:///home/xs2534_nyu_edu/hudi_table/busiest_locations").
+      option("checkpointLocation", "file:///home/xs2534_nyu_edu/hudi_table/hudi_checkpoint_busiest_locations").
+      trigger(Trigger.Once()).
+      start()
 
-    val hudiSink1: StreamingQuery = busiestLocationsDf.writeStream
-      .foreachBatch { (batchDf: DataFrame, batchId: Long) =>
-        //  Write into Hudi
-        batchDf.write.format("org.apache.hudi")
-          .options(hudiOptionsBusiestLocations)
-          .mode("append")
-          .save(hudiTablePathBusiestLocations)
 
-        println("The busiest location")
-        batchDf.orderBy(col("event_count").desc)
-          .where(col("event_type") === "pickup")
-          .limit(1)
-          .show(truncate = false)
 
-        println("The most popular location")
-        batchDf.orderBy(col("event_count").desc)
-          .where(col("event_type") === "dropoff")
-          .limit(1)
-          .show(truncate = false)
-      }
-      .option("checkpointLocation", "file:///home/xs2534_nyu_edu/hudi_table/hudi_checkpoint_busiest_locations")
-      .start()
-
-    val hudiSink2: StreamingQuery = ongoingTripsDf.writeStream
-      .format("org.apache.hudi")
-      .options(hudiOptionsOngoingTrips)
-      .option("checkpointLocation", "file:///home/xs2534_nyu_edu/hudi_table/hudi_checkpoint_ongoing_trips")
-      .outputMode("append")
+    val ongoingTripsDf  = df.withColumn("event_time", col("event_time").cast("timestamp"))
+      .agg(
+        functions.sum(when(col("event_type") === "pickup", 1).otherwise(0)).alias("num_pickups") -
+          functions.sum(when(col("event_type") === "dropoff", 1).otherwise(0)).alias("num_dropoffs")
+      ).as("ongoing_trips")
+      .writeStream
       .trigger(Trigger.ProcessingTime("1 minute"))
-      .start(hudiTablePathOngoingTrips)
+      .format("org.apache.hudi").
+      options(hudiOptionsOngoingTrips).
+      outputMode("append").
+      option("path", "file:///home/xs2534_nyu_edu/hudi_table/ongoing_trips").
+      option("checkpointLocation", "file:///home/xs2534_nyu_edu/hudi_table/hudi_checkpoint_ongoing_trips").
+      trigger(Trigger.Once()).
+      start()
 
-    hudiSink1.awaitTermination()
-    hudiSink2.awaitTermination()
+
+
+
+
+
+    // 等待流式查询结束
+    ongoingTripsDf.awaitTermination()
+    busiestLocationsDf.awaitTermination()
   }
 }
