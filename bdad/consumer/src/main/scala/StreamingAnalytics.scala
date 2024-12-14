@@ -7,8 +7,10 @@ import org.apache.spark.sql.streaming.{StreamingQuery, Trigger}
 object StreamingAnalytics {
   def apply(df: org.apache.spark.sql.DataFrame)(implicit spark: SparkSession): (StreamingQuery, StreamingQuery) = {
     val homeDir = System.getProperty("user.home")
-    val locationDf = spark.read.option("header", "true").csv(s"$homeDir/taxi_zone_lookup.csv")
-      .select(col("LocationID").alias("location_id"), concat_ws(",", col("Zone"), col("Borough")).alias("Location")).cache
+    val locationDf = spark.read
+      .option("header", "true")
+      .csv(s"$homeDir/taxi_zone_lookup.csv")
+      .select(col("LocationID").alias("location_id"), concat_ws(",", col("Zone"), col("Borough")).alias("location"))
 
     // the number of pickups in the last five minutes
     val q2Count = df.withColumn("event_time", col("event_time").cast("timestamp"))
