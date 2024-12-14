@@ -40,7 +40,7 @@ object KafkaConsumer {
       .select("data.*")
       .drop(col("data"))
 
-    val (ongoingTripsDf, busiestLocationsDf) = StreamingAnalytics(jsonDf)<spark>
+    val (ongoingTripsDf, busiestLocationsDf) = StreamingAnalytics(jsonDf)
 
 
     val commonHudiOptions = Map(
