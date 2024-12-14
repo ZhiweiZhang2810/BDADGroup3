@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <property>
+        <name>hive.metastore.uris</name>
+        <value>thrift://localhost:9083</value> <!-- Adjust to your Hive Metastore URI -->
+        <description>Hive Metastore URI for Spark to connect to</description>
+    </property>
+
+    <property>
+        <name>spark.sql.catalogImplementation</name>
+        <value>hive</value>
+        <description>Use Hive for Spark catalog implementation</description>
+    </property>
+
+    <property>
+        <name>hive.metastore.jdbc.url</name>
+        <value>jdbc:postgresql://localhost:5432/metastore</value>
+        <description>JDBC URL for Hive Metastore</description>
+    </property>
+
+</configuration>
