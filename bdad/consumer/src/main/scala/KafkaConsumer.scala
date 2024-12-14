@@ -53,10 +53,10 @@ object KafkaConsumer {
     )
 
     val hudiTableNameBusiestLocations = "busiest_locations"
-    val hudiTablePathBusiestLocations = "file:///path/to/hudi/table/busiest_locations"
+    val hudiTablePathBusiestLocations = "file:///home/xs2534_nyu_edu/hudi_table/busiest_locations"
 
     val hudiTableNameOngoingTrips = "ongoing_trips"
-    val hudiTablePathOngoingTrips = "file:///path/to/hudi/table/ongoing_trips"
+    val hudiTablePathOngoingTrips = "file:///home/xs2534_nyu_edu/hudi_table/ongoing_trips"
 
     val hudiOptionsBusiestLocations = commonHudiOptions ++ Map(
       "hoodie.table.name" -> hudiTableNameBusiestLocations,
