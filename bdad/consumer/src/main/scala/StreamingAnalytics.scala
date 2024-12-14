@@ -14,14 +14,15 @@ object StreamingAnalytics {
     val q2Count = df.withColumn("event_time", col("event_time").cast("timestamp"))
       .agg(
         functions.sum(when(col("event_type") === "pickup", 1).otherwise(0)).alias("num_pickups") -
-        functions.sum(when(col("event_type") === "dropoff", 1).otherwise(0)).alias("num_dropoffs")
+          functions.sum(when(col("event_type") === "dropoff", 1).otherwise(0)).alias("num_dropoffs")
       ).as("ongoing_trips")
       .writeStream
       .trigger(Trigger.ProcessingTime("1 minute"))
       .format("console")
       .outputMode("update")
       .option("truncate", "false")
-      .option("checkpointLocation", "./cp")
+      .option("checkpointLocation", "./cp/q4")
+      .outputMode("complete")
       .start()
 
     // Zone with the most pickups in the last five minutes
@@ -31,6 +32,7 @@ object StreamingAnalytics {
       .agg(count("*").alias("event_count"))
       .join(locationDf, "location_id")
       .writeStream
+      .outputMode("complete")
       .foreachBatch((bdf: org.apache.spark.sql.DataFrame, batchId: Long) => {
         println("The busiest location")
         bdf.orderBy(col("event_count").desc)
@@ -44,7 +46,7 @@ object StreamingAnalytics {
           .limit(1)
           .show()
       })
-      .option("checkpointLocation", "./cp")
+      .option("checkpointLocation", "./cp/q3")
       .option("truncate", "false")
       .start()
 

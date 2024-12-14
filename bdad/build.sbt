@@ -21,7 +21,7 @@ lazy val producer = (project in file("producer"))
     libraryDependencies ++= Seq(
       "org.apache.spark" %% "spark-core" % "3.5.0",
       "org.apache.spark" %% "spark-sql" % "3.5.0",
-      "org.apache.spark" %% "spark-sql-kafka-0-10" % "3.5.0"
+      "org.apache.spark" %% "spark-sql-kafka-0-10" % "3.5.0",
     )
   )
 
@@ -33,6 +33,7 @@ lazy val consumer = (project in file("consumer"))
     libraryDependencies ++= Seq(
       "org.apache.spark" %% "spark-core" % "3.5.0",
       "org.apache.spark" %% "spark-sql" % "3.5.0",
-      "org.apache.spark" %% "spark-sql-kafka-0-10" % "3.5.0"
+      "org.apache.spark" %% "spark-sql-kafka-0-10" % "3.5.0",
+      "org.apache.hudi" %% "hudi-spark3.5-bundle" % "0.15.0",
     )
   )
