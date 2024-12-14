@@ -46,7 +46,7 @@ object KafkaConsumer {
 
 
 
-    // Hudi 选项
+    // Hudi option
     val commonHudiOptions = Map(
       "hoodie.datasource.write.table.type" -> "MERGE_ON_READ",
       "hoodie.datasource.write.operation" -> "upsert",
@@ -57,7 +57,7 @@ object KafkaConsumer {
     )
 
 
-    // Hudi 选项针对 busiestLocationsDf
+    // busiestLocationsDf
     val hudiOptionsBusiestLocations = commonHudiOptions ++ Map(
       "hoodie.table.name" -> "busiest_locations",
       "hoodie.datasource.write.precombine.field" -> "event_time",
@@ -65,7 +65,7 @@ object KafkaConsumer {
       "hoodie.datasource.write.partitionpath.field" -> "event_type"
     )
 
-    // Hudi 选项针对 ongoingTripsDf
+    // ongoingTripsDf
     val hudiOptionsOngoingTrips = commonHudiOptions ++ Map(
       "hoodie.table.name" -> "ongoing_trips",
       "hoodie.datasource.write.recordkey.field" -> "window",
@@ -109,7 +109,6 @@ object KafkaConsumer {
 
 
 
-    // 等待流式查询结束
     ongoingTripsDf.awaitTermination()
     busiestLocationsDf.awaitTermination()
   }
